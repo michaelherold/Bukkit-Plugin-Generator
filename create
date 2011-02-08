@@ -49,12 +49,24 @@ function pause(){
 	read -p "Press any key to continue..."
 }
 
+# Print the status of project generation generically
+function print_generation() {
+	local str_ide="$1"
+	local gen="$2"
+	echo -ne "    ${str_ide}${c_default}: " >&2; if [ $gen == 1 ]; then echo "True" >&2 ; else echo "False" >&2 ; fi
+}
+
 # Read Configuration Files
 function read_config(){
 	local cfgPath="$(pwd)/settings.cfg"
 	if [ -a $cfgPath ]; then
 		echo -e "\n${c_cyan}Reading ${c_green}config${c_cyan}...${c_default}" >&2
 		source $cfgPath
+		echo -e "  ${c_cyan}Creating IDE-specific projects:${c_default}" >&2
+		print_generation "Ant" $gen_ant
+		print_generation "Eclipse" $gen_eclipse
+		print_generation "IntelliJ" $gen_intellij
+		print_generation "Netbeans" $gen_netbeans
 		return
 	else
 		echo -e "\n${c_cyan}Creating ${c_green}default config${c_cyan}...${c_default}" >&2
@@ -118,7 +130,7 @@ read_config
 # Get and validate user name
 while :
 do
-	echo -ne "${c_cyan}Author's name:${c_default} "; read USERNAME
+	echo -ne "\n${c_cyan}Author's name:${c_default} "; read USERNAME
 	validate_input "$USERNAME" 0 # No underscores or slashes allowed.
 	if [ $is_valid == 1 ]; then
 		break
