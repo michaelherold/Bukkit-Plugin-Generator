@@ -115,32 +115,40 @@ echo -ne "${c_white} __    ____  _      ____  ___    __   _____  ___   ___  \n/ 
 # Read in our configuration.
 read_config
 
-# Questions.
-echo -ne "${c_cyan}Author's name:${c_default} "; read USERNAME
-echo -ne "${c_cyan}Plugin's name:${c_default} "; read PLUGINNAME
-echo -ne "${c_cyan}Plugin Version (${c_default}0.1${c_cyan} by default):${c_default} "; read PLUGINVERSION
-PLUGINVERSION=${PLUGINVERSION:-0.1}
-
-# Validate the input.
-## First user name.
-validate_input "$USERNAME" 0 # No underscores or slashes allowed.
-if [ $is_valid == 0 ]; then
+# Get and validate user name
+while :
+do
+	echo -ne "${c_cyan}Author's name:${c_default} "; read USERNAME
+	validate_input "$USERNAME" 0 # No underscores or slashes allowed.
+	if [ $is_valid == 1 ]; then
+		break
+	fi
 	echo -e "${c_red}Error: ${c_white}The author's name can only be made up of letters and numbers.${c_default}"
-	echo "Now exiting.."
-	exit
-fi
-## Next plugin name.
-validate_input "$PLUGINNAME" 0 0 # Nothing but letters here.
-if [ $is_valid == 0 ]; then
+done
+
+# Get and validate plugin name
+is_valid=0
+while :
+do
+	echo -ne "${c_cyan}Plugin's name:${c_default} "; read PLUGINNAME
+	validate_input "$PLUGINNAME" 0 0 # Nothing but letters here.
+	if [ $is_valid == 1 ]; then
+		break
+	fi
 	echo -e "${c_red}Error: ${c_white}The plugin's name can only be made up of letters.${c_default}"
-	echo "Now exiting.."
-	exit
-fi
-## Finally, the version.
-validate_input "$PLUGINVERSION" 1 1 1 # Put whatever you want here.
-if [ $is_valid == 0 ]; then
-	PLUGINVERSION="0.1"
-fi
+done
+
+# Get and validate the version
+while :
+do
+	echo -ne "${c_cyan}Plugin Version (${c_default}0.1${c_cyan} by default):${c_default} "; read PLUGINVERSION
+	PLUGINVERSION=${PLUGINVERSION:-0.1}
+	validate_input "$PLUGINVERSION" 1 1 1 # Put whatever you want here.
+	if [ $is_valid == 0 ]; then
+		PLUGINVERSION="0.1"
+		break # No real validation happening currently, so continue on without the loop
+	fi
+done
 
 # Set the filenames and paths.
 echo -e "${c_cyan}Generating  ${c_green}manifest${c_cyan}..\n\n${c_white}Plugin: ${c_green}${PLUGINNAME}\n${c_white}Version: ${c_blue}${PLUGINVERSION}\n${c_white}Author: ${c_yellow}${USERNAME}${c_default}\n"
