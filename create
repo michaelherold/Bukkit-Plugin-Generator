@@ -70,14 +70,14 @@ function read_config(){
 		for ide in ${IDE_LIST[@]} ;
 		do
 			set $ide;
-			local gen_var="\$gen_$(echo $1 | tr '[A-Z]' '[a-z]')"
+			local gen_var="\$gen_$(echo $ide | tr '[A-Z]' '[a-z]')"
 			eval gen_var=$gen_var
 			print_generation $1 $gen_var
 		done
 	else
 		# If there is no config file, give the user the option to configure
 		# their IDE preferences
-		yes_no config "\n${c_cyan}No ${c_green}config ${c_cyan}file found. Would you like to configure the system? (Y/N):${c_default} "
+		yes_no config "\n${c_cyan}No ${c_green}config ${c_cyan}file found. Would you like to configure the system? (Y/N): ${c_default}"
 		
 		# If they don't want to configure the system, write a default config
 		# with all IDEs set to false
@@ -90,8 +90,8 @@ function read_config(){
 			for ide in ${IDE_LIST[@]} ;
 			do
 				set $ide;
-				local gen_var="gen_$(echo $1 | tr '[A-Z]' '[a-z]')"
-				yes_no $gen_var "${c_cyan}Would you like to build a project for $ide? (Y/N):${c_default} "
+				local gen_var="gen_$(echo $ide | tr '[A-Z]' '[a-z]')"
+				yes_no $gen_var "${c_cyan}Would you like to build a project for $ide? (Y/N): ${c_default}"
 			done
 			
 			# Write configured file
