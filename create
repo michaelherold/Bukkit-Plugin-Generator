@@ -83,9 +83,23 @@ function read_config(){
 		# with all IDEs set to false
 		if [ $config == 0 ]; then
 			echo -e "\n${c_cyan}Creating ${c_green}default config${c_cyan}...${c_default}" >&2
-			echo -ne "# General Settings\noutput_folder=\".\"\n\n# Project File Generation\ngen_intellij=0\ngen_eclipse=0\ngen_netbeans=0\ngen_ant=0" > $cfgPath
+			output_folder="\".\""
+			for ide in ${IDE_LIST[@]} ;
+			do
+				set $ide;
+				local gen_var="\$gen_$(echo $ide | tr '[A-Z]' '[a-z]')"
+				eval ${gen_var#$}=0
+			done
+			write_config $cfgPath
 			source $cfgPath
 		else
+			# Ask for output_path
+			echo -ne "${c_cyan}Where would you like to put the source files? (Default: \".\"): ${c_default}"
+			read output_folder
+			if [ -z "$output_folder" ]; then
+				output_folder="\".\""
+			fi
+			
 			# Ask for user input for config for each IDE
 			for ide in ${IDE_LIST[@]} ;
 			do
@@ -95,15 +109,31 @@ function read_config(){
 			done
 			
 			# Write configured file
-			# TODO: Generalize it for new IDEs
-			# TODO: Ask for output folder
 			# TODO: Add username as a config variable
 			# TODO: Add namespace as a config variable
-			echo -ne "# General Settings\noutput_folder=\".\"\n\n# Project File Generation\ngen_intellij=${gen_intellij}\ngen_eclipse=${gen_eclipse}\ngen_netbeans=${gen_netbeans}\ngen_ant=${gen_ant}" > $cfgPath
+			write_config $cfgPath
 		fi
 	fi
 	
 	return
+}
+
+# Write a config file
+function write_config() {
+	local cfgFile=$1
+	echo -e "# General Settings" > $cfgFile
+	echo -e "output_folder=$output_folder" >> $cfgFile
+
+	echo -e "\n# Project File Generation" >> $cfgFile
+
+	for ide in ${IDE_LIST[@]} ;
+	do
+		set $ide;
+		local gen_var="\$gen_$(echo $ide | tr '[A-Z]' '[a-z]')"
+		local gen_val=$gen_var
+		eval gen_val=$gen_val
+		echo -e "${gen_var#$}=$gen_val" >> $cfgFile
+	done
 }
 
 # Input validation.
