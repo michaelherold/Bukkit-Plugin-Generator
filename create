@@ -53,7 +53,7 @@ function pause(){
 function print_generation() {
 	local str_ide="$1"
 	local gen="$2"
-	echo -ne "    ${str_ide}${c_default}: " >&2; if [ $gen == 1 ]; then echo "True" >&2 ; else echo "False" >&2 ; fi
+	echo -ne "    ${str_ide}${c_default}: " >&2; if [ $gen == 1 ]; then echo -e "${c_green}True${c_default}" >&2 ; else echo -e "${c_red}False${c_default}" >&2 ; fi
 }
 
 # Read Configuration Files
