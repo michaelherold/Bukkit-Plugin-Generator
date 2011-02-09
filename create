@@ -63,10 +63,13 @@ function read_config(){
 		echo -e "\n${c_cyan}Reading ${c_green}config${c_cyan}...${c_default}" >&2
 		source $cfgPath
 		echo -e "  ${c_cyan}Creating IDE-specific projects:${c_default}" >&2
-		print_generation "Ant" $gen_ant
-		print_generation "Eclipse" $gen_eclipse
-		print_generation "IntelliJ" $gen_intellij
-		print_generation "Netbeans" $gen_netbeans
+		for ide in Ant Eclipse IntelliJ Netbeans ;
+		do
+			set $ide;
+			local gen_var="\$gen_$(echo $1 | tr '[A-Z]' '[a-z]')"
+			eval gen_var=$gen_var
+			print_generation $1 $gen_var
+		done
 		return
 	else
 		echo -e "\n${c_cyan}Creating ${c_green}default config${c_cyan}...${c_default}" >&2
