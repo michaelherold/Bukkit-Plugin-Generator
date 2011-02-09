@@ -267,7 +267,7 @@ SCRIPTROOT=`pwd`
 cd "${ENDPATH}"
 
 # Create our plugin's YAML file.
-cd ../../../../
+cd ../../../
 echo "name: $PLUGINNAME
 
 main: $USERNAME.$PLUGINNAME
