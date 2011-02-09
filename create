@@ -44,6 +44,9 @@ elif [[ $_OS == 'mac' ]]; then
 	c_yellow='\033[1;33m'
 fi
 
+# List of IDEs supported by project generation
+IDE_LIST=( Ant Eclipse IntelliJ Netbeans )
+
 # Pause (Getch)
 function pause(){
 	read -p "Press any key to continue..."
@@ -60,23 +63,47 @@ function print_generation() {
 function read_config(){
 	local cfgPath="$(pwd)/settings.cfg"
 	if [ -a $cfgPath ]; then
+		# There was a config file present, so output its preferences
 		echo -e "\n${c_cyan}Reading ${c_green}config${c_cyan}...${c_default}" >&2
 		source $cfgPath
 		echo -e "  ${c_cyan}Creating IDE-specific projects:${c_default}" >&2
-		for ide in Ant Eclipse IntelliJ Netbeans ;
+		for ide in ${IDE_LIST[@]} ;
 		do
 			set $ide;
 			local gen_var="\$gen_$(echo $1 | tr '[A-Z]' '[a-z]')"
 			eval gen_var=$gen_var
 			print_generation $1 $gen_var
 		done
-		return
 	else
-		echo -e "\n${c_cyan}Creating ${c_green}default config${c_cyan}...${c_default}" >&2
-		echo -ne "# General Settings\noutput_folder=\".\"\n\n# Project File Generation\ngen_intellij=0\ngen_eclipse=0\ngen_netbeans=0\ngen_ant=0" > $cfgPath
-		source $cfgPath
-		return
+		# If there is no config file, give the user the option to configure
+		# their IDE preferences
+		yes_no config "\n${c_cyan}No ${c_green}config ${c_cyan}file found. Would you like to configure the system? (Y/N):${c_default} "
+		
+		# If they don't want to configure the system, write a default config
+		# with all IDEs set to false
+		if [ $config == 0 ]; then
+			echo -e "\n${c_cyan}Creating ${c_green}default config${c_cyan}...${c_default}" >&2
+			echo -ne "# General Settings\noutput_folder=\".\"\n\n# Project File Generation\ngen_intellij=0\ngen_eclipse=0\ngen_netbeans=0\ngen_ant=0" > $cfgPath
+			source $cfgPath
+		else
+			# Ask for user input for config for each IDE
+			for ide in ${IDE_LIST[@]} ;
+			do
+				set $ide;
+				local gen_var="gen_$(echo $1 | tr '[A-Z]' '[a-z]')"
+				yes_no $gen_var "${c_cyan}Would you like to build a project for $ide? (Y/N):${c_default} "
+			done
+			
+			# Write configured file
+			# TODO: Generalize it for new IDEs
+			# TODO: Ask for output folder
+			# TODO: Add username as a config variable
+			# TODO: Add namespace as a config variable
+			echo -ne "# General Settings\noutput_folder=\".\"\n\n# Project File Generation\ngen_intellij=${gen_intellij}\ngen_eclipse=${gen_eclipse}\ngen_netbeans=${gen_netbeans}\ngen_ant=${gen_ant}" > $cfgPath
+		fi
 	fi
+	
+	return
 }
 
 # Input validation.
@@ -121,6 +148,31 @@ function validate_input(){
 	eval "_result=\$(echo -ne \"${_action}\" | ${_expr})"
 	is_valid=$(( ${#_result} == 0 ? 1 : 0 ))
 	return
+}
+
+# A simple looping yes/no dialog
+# @param $1 The variable to write
+# @param $2 The prompt to display
+function yes_no() {
+	local __resultvar=$1
+	local _result
+	echo -ne $2
+	read _result; _result=$(echo $_result | tr '[A-Z]' '[a-z]')
+	while :
+	do
+		if [ "$_result" == "y" -o "$_result" == "n" ]; then
+			break;
+		fi
+		echo -n "Input not recognized. Please enter Y or N: "
+		read _result; _result=$(echo $_result | tr '[A-Z]' '[a-z]')
+	done
+	
+	if [ "$_result" == "y" ]; then
+		_result=1
+	else
+		_result=0
+	fi
+	eval $__resultvar="'$_result'"
 }
 
 # Our banner.
