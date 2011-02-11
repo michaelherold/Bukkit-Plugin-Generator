@@ -56,7 +56,12 @@ function pause(){
 function print_generation() {
 	local str_ide="$1"
 	local gen="$2"
-	echo -ne "    ${str_ide}${c_default}: " >&2; if [ $gen == 1 ]; then echo -e "${c_green}True${c_default}" >&2 ; else echo -e "${c_red}False${c_default}" >&2 ; fi
+	echo -ne "    ${str_ide}${c_default}: " >&2
+	if [ $gen == 1 ]; then
+		echo -e "${c_green}True${c_default}" >&2
+	else
+		echo -e "${c_red}False${c_default}" >&2
+	fi
 }
 
 # Read Configuration Files
@@ -77,7 +82,8 @@ function read_config(){
 	else
 		# If there is no config file, give the user the option to configure
 		# their IDE preferences
-		yes_no config "\n${c_cyan}No ${c_green}config ${c_cyan}file found. Would you like to configure the system? (Y/N): ${c_default}"
+		prompt="\n${c_cyan}No ${c_green}config ${c_cyan}file found. Would you like to configure the system? (Y/N): ${c_default}"
+		yes_no config "$prompt"
 		
 		# If they don't want to configure the system, write a default config
 		# with all IDEs set to false
@@ -255,7 +261,12 @@ if [ $is_valid == 0 ]; then
 fi
 
 # Set the filenames and paths.
-echo -e "${c_cyan}Generating  ${c_green}manifest${c_cyan}..\n\n${c_white}Plugin: ${c_green}${PLUGINNAME}\n${c_white}Version: ${c_blue}${PLUGINVERSION}\n${c_white}Author: ${c_yellow}${USERNAME}${c_default}\n"
+echo -e "${c_cyan}Generating  ${c_green}manifest${c_cyan}..
+
+${c_white}Plugin: ${c_green}${PLUGINNAME}
+${c_white}Version: ${c_blue}${PLUGINVERSION}
+${c_white}Author: ${c_yellow}${USERNAME}${c_default}
+"
 BLOCKLISTENER=BlockListener.java
 YBLOCKLISTENER=${PLUGINNAME}BlockListener.java
 PLAYERLISTENER=PlayerListener.java
