@@ -180,6 +180,29 @@ function validate_input(){
 	return
 }
 
+# A simple loop ensuring the validation of a variable
+# @param $1 The variable to validate.
+# @param $2 The input prompt.
+# @param $3 The error message.
+# @param $4 Flag controlling allowance of dashes and underscores.
+# @param $5 Flag controlling allowance of numbers.
+# @param $6 Flag toggling validation off (i.e. allowing anything).
+function validation_loop() {
+	while :
+	do
+		local __resultvar=$1
+		local _result
+		echo -ne "$2"; read _result
+		validate_input "$_result" $4 $5 $6
+		if [ $is_valid == 1 ]; then
+			break
+		fi
+		echo -e "$3"
+	done
+	eval $__resultvar="'$_result'"
+	is_valid=0
+}
+
 # A simple looping yes/no dialog
 # @param $1 The variable to write
 # @param $2 The prompt to display
@@ -213,30 +236,18 @@ echo -ne "${c_white} __    ____  _      ____  ___    __   _____  ___   ___  \n/ 
 read_config
 
 # Get and validate user name
-while :
-do
-	echo -ne "\n${c_cyan}Author's name:${c_default} "; read USERNAME
-	validate_input "$USERNAME" 0 # No underscores or slashes allowed.
-	if [ $is_valid == 1 ]; then
-		break
-	fi
-	echo -e "${c_red}Error: ${c_white}The author's name can only be made up of letters and numbers.${c_default}"
-done
+prompt="\n${c_cyan}Username (only letters and numbers):${c_default} "
+error="${c_red}Error: ${c_white}The username can only be made up of letters and numbers.${c_default}"
+validation_loop USERNAME "$prompt" "$error" 0 1 0
 
 # Get and validate plugin name
-is_valid=0
-while :
-do
-	echo -ne "${c_cyan}Plugin's name:${c_default} "; read PLUGINNAME
-	validate_input "$PLUGINNAME" 0 0 # Nothing but letters here.
-	if [ $is_valid == 1 ]; then
-		break
-	fi
-	echo -e "${c_red}Error: ${c_white}The plugin's name can only be made up of letters.${c_default}"
-done
+prompt="${c_cyan}Plugin's name:${c_default} "
+error="${c_red}Error: ${c_white}The plugin's name can only be made up of letters.${c_default}"
+validation_loop PLUGINNAME "$prompt" "$error" 0 0 0 # Disallow numbers and symbols
 
 # Get and validate the version
-echo -ne "${c_cyan}Plugin Version (${c_default}0.1${c_cyan} by default):${c_default} "; read PLUGINVERSION
+prompt="${c_cyan}Plugin Version (${c_default}0.1${c_cyan} by default):${c_default} "
+echo -ne "$prompt"; read PLUGINVERSION
 PLUGINVERSION=${PLUGINVERSION:-0.1}
 validate_input "$PLUGINVERSION" 1 1 1 # Put whatever you want here.
 if [ $is_valid == 0 ]; then
