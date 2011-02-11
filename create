@@ -149,8 +149,8 @@ function validate_input(){
 	local _numbers=${3:-$_true}
 	# Finally, anything
 	local _anything=${4:-$_false}
-	if [ $_anything ]; then
-		is_valid=1
+	if [ $_anything == $_true ]; then
+		is_valid=$_true
 		return
 	fi
 	# Escape some characters in the actual value.
@@ -161,12 +161,12 @@ function validate_input(){
 	local _expr="sed -e 's/[a-zA-Z"
 	
 	## If we allow numbers, add them in.
-	if [ $_numbers == 1 ]; then
+	if [ $_numbers == $_true ]; then
 		_expr="${_expr}0-9"
 	fi
 	
 	## If we allow symbols, add them in.
-	if [ $_symbols == 1 ]; then
+	if [ $_symbols == $_true ]; then
 		_expr="${_expr}_-"
 	fi
 	
@@ -176,7 +176,7 @@ function validate_input(){
 	# Now put it all together.
 	local _result=""
 	eval "_result=\$(echo -ne \"${_action}\" | ${_expr})"
-	is_valid=$(( ${#_result} == 0 ? 1 : 0 ))
+	is_valid=$(( ${#_result} == $_false ? $_true : $_false ))
 	return
 }
 
