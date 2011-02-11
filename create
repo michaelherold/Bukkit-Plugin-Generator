@@ -47,6 +47,54 @@ fi
 # List of IDEs supported by project generation
 IDE_LIST=( Ant Eclipse IntelliJ Netbeans )
 
+# Set up the configuration file, either via a default mode or interactive mode.
+# @param $1 The absolution path of the configuration file.
+function configure() {
+	# Grab configuration path
+	cfgPath=$1
+	
+	# Give the user the option to configure their preferences
+	prompt="\n${c_cyan}No ${c_green}config ${c_cyan}file found. Would you like to configure the system? (Y/N): ${c_default}"
+	yes_no config "$prompt"
+	
+	if [ $config == 1 ]; then
+		# Start configuration process
+		# Ask for output_path. Default to "."
+		echo -ne "${c_cyan}Where would you like to put the source files? (Default: \".\"): ${c_default}"
+		read output_folder
+		if [ -z "$output_folder" ]; then
+			output_folder="\".\""
+		fi
+		
+		# Ask for user input for config for each IDE. Loop until yes or no.
+		for ide in ${IDE_LIST[@]} ;
+		do
+			set $ide;
+			local gen_var="gen_$(echo $ide | tr '[A-Z]' '[a-z]')"
+			yes_no $gen_var "${c_cyan}Would you like to build a project for $ide? (Y/N): ${c_default}"
+		done
+		
+		# Write configured file
+		# TODO: Add username as a config variable
+		# TODO: Add namespace as a config variable
+		write_config $cfgPath
+		
+	else
+		# If they don't want to configure their preferences, write a default
+		# config with all IDEs set to false
+		echo -e "\n${c_cyan}Creating ${c_green}default config${c_cyan}...${c_default}" >&2
+		output_folder="\".\""
+		for ide in ${IDE_LIST[@]} ;
+		do
+			set $ide;
+			local gen_var="\$gen_$(echo $ide | tr '[A-Z]' '[a-z]')"
+			eval ${gen_var#$}=0
+		done
+		write_config $cfgPath
+		source $cfgPath
+	fi
+}
+
 # Pause (Getch)
 function pause(){
 	read -p "Press any key to continue..."
@@ -80,45 +128,7 @@ function read_config(){
 			print_generation $1 $gen_var
 		done
 	else
-		# If there is no config file, give the user the option to configure
-		# their IDE preferences
-		prompt="\n${c_cyan}No ${c_green}config ${c_cyan}file found. Would you like to configure the system? (Y/N): ${c_default}"
-		yes_no config "$prompt"
-		
-		# If they don't want to configure the system, write a default config
-		# with all IDEs set to false
-		if [ $config == 0 ]; then
-			echo -e "\n${c_cyan}Creating ${c_green}default config${c_cyan}...${c_default}" >&2
-			output_folder="\".\""
-			for ide in ${IDE_LIST[@]} ;
-			do
-				set $ide;
-				local gen_var="\$gen_$(echo $ide | tr '[A-Z]' '[a-z]')"
-				eval ${gen_var#$}=0
-			done
-			write_config $cfgPath
-			source $cfgPath
-		else
-			# Ask for output_path
-			echo -ne "${c_cyan}Where would you like to put the source files? (Default: \".\"): ${c_default}"
-			read output_folder
-			if [ -z "$output_folder" ]; then
-				output_folder="\".\""
-			fi
-			
-			# Ask for user input for config for each IDE
-			for ide in ${IDE_LIST[@]} ;
-			do
-				set $ide;
-				local gen_var="gen_$(echo $ide | tr '[A-Z]' '[a-z]')"
-				yes_no $gen_var "${c_cyan}Would you like to build a project for $ide? (Y/N): ${c_default}"
-			done
-			
-			# Write configured file
-			# TODO: Add username as a config variable
-			# TODO: Add namespace as a config variable
-			write_config $cfgPath
-		fi
+		configure "$cfgPath"
 	fi
 	
 	return
