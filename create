@@ -66,6 +66,11 @@ function configure() {
 			output_folder="\".\""
 		fi
 		
+		# Ask for username
+		prompt="${c_cyan}Author's Username (only letters and numbers):${c_default} "
+		error="${c_red}Error: ${c_white}The username can only be made up of letters and numbers.${c_default}"
+		validation_loop author_username "$prompt" "$error" 0 1 0
+		
 		# Ask for user input for config for each IDE. Loop until yes or no.
 		for ide in ${IDE_LIST[@]} ;
 		do
@@ -75,7 +80,6 @@ function configure() {
 		done
 		
 		# Write configured file
-		# TODO: Add username as a config variable
 		# TODO: Add namespace as a config variable
 		write_config $cfgPath
 		
@@ -130,6 +134,7 @@ function read_config(){
 			print_generation $ide $gen_var
 		done
 		echo -e "  ${c_cyan}Output Folder:${c_green} \"$output_folder\" ${c_default}" >&2
+		echo -e "  ${c_cyan}Author's Username:${c_green} "$author_username" ${c_default}" >&2
 	else
 		configure "$cfgPath"
 	fi
@@ -141,8 +146,9 @@ function read_config(){
 # @param $1 The absolute path to the configuration file.
 function write_config() {
 	local cfgFile=$1
-	echo -e "# General Settings" > $cfgFile
-	echo -e "output_folder=$output_folder" >> $cfgFile
+	echo "# General Settings" > $cfgFile
+	echo "output_folder=$output_folder" >> $cfgFile
+	echo "author_username=$author_username" >> $cfgFile
 
 	echo -e "\n# Project File Generation" >> $cfgFile
 
@@ -256,9 +262,11 @@ echo -ne "${c_white} __    ____  _      ____  ___    __   _____  ___   ___  \n/ 
 read_config
 
 # Get and validate user name
-prompt="\n${c_cyan}Author's Username (only letters and numbers):${c_default} "
-error="${c_red}Error: ${c_white}The username can only be made up of letters and numbers.${c_default}"
-validation_loop USERNAME "$prompt" "$error" 0 1 0
+if [ -z "$author_username" ]; then
+	prompt="\n${c_cyan}Author's Username (only letters and numbers):${c_default} "
+	error="${c_red}Error: ${c_white}The username can only be made up of letters and numbers.${c_default}"
+	validation_loop author_username "$prompt" "$error" 0 1 0
+fi
 
 # Get and validate plugin name
 prompt="${c_cyan}Plugin's name:${c_default} "
@@ -279,7 +287,7 @@ echo -e "${c_cyan}Generating  ${c_green}manifest${c_cyan}..
 
 ${c_white}Plugin: ${c_green}${PLUGINNAME}
 ${c_white}Version: ${c_blue}${PLUGINVERSION}
-${c_white}Author: ${c_yellow}${USERNAME}${c_default}
+${c_white}Author: ${c_yellow}${author_username}${c_default}
 "
 BLOCKLISTENER=BlockListener.java
 YBLOCKLISTENER=${PLUGINNAME}BlockListener.java
@@ -287,7 +295,7 @@ PLAYERLISTENER=PlayerListener.java
 YPLAYERLISTENER=${PLUGINNAME}PlayerListener.java 
 PLUGIN=YPlugin.java
 YPLUGIN="${PLUGINNAME}.java"
-ENDPATH="${output_folder}/${PLUGINNAME}/src/${USERNAME}/${PLUGINNAME}"
+ENDPATH="${output_folder}/${PLUGINNAME}/src/${author_username}/${PLUGINNAME}"
 BINPATH="${output_folder}/${PLUGINNAME}/bin"
 
 # Create the output directories.
@@ -302,18 +310,18 @@ cd "${ENDPATH}"
 cd ../../../
 echo "name: $PLUGINNAME
 
-main: $USERNAME.$PLUGINNAME
+main: $author_username.$PLUGINNAME
 
 version: $PLUGINVERSION" > plugin.yml
 
-# Inform USERNAME on status.
+# Inform author_username on status.
 echo -e "${c_cyan}Generating ${c_green}Source Files${c_cyan}..${c_default}"
 
 # Copy the rest of the template files.
 cd "${SCRIPTROOT}"
-sed -e "s/<yourname>/$USERNAME/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${BLOCKLISTENER}" > "${ENDPATH}/$YBLOCKLISTENER"
-sed -e "s/<yourname>/$USERNAME/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${PLAYERLISTENER}" > "${ENDPATH}/$YPLAYERLISTENER"
-sed -e "s/<yourname>/$USERNAME/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${PLUGIN}" > "${ENDPATH}/${PLUGINNAME}.java"
+sed -e "s/<yourname>/$author_username/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${BLOCKLISTENER}" > "${ENDPATH}/$YBLOCKLISTENER"
+sed -e "s/<yourname>/$author_username/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${PLAYERLISTENER}" > "${ENDPATH}/$YPLAYERLISTENER"
+sed -e "s/<yourname>/$author_username/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${PLUGIN}" > "${ENDPATH}/${PLUGINNAME}.java"
 
 # Project file generation.
 
@@ -344,7 +352,7 @@ if [ $gen_netbeans == 1 ]; then
 	mkdir -p "${output_folder}/${PLUGINNAME}/nbproject/private"
 	cp "${SCRIPTROOT}/projects/netbeans/genfiles.properties" "${output_folder}/${PLUGINNAME}/nbproject/genfiles.properties"
 	cp "${SCRIPTROOT}/projects/netbeans/private/private.properties" "${output_folder}/${PLUGINNAME}/nbproject/private/private.properties"
-	sed -e "s/{{USERNAME}}/$USERNAME/g" -e "s/{{PLUGINNAME}}/$PLUGINNAME/g" "${SCRIPTROOT}/projects/netbeans/project.properties" > "${output_folder}/${PLUGINNAME}/nbproject/project.properties"
+	sed -e "s/{{author_username}}/$author_username/g" -e "s/{{PLUGINNAME}}/$PLUGINNAME/g" "${SCRIPTROOT}/projects/netbeans/project.properties" > "${output_folder}/${PLUGINNAME}/nbproject/project.properties"
 	sed -e "s/{{PLUGINNAME}}/$PLUGINNAME/g" "${SCRIPTROOT}/projects/netbeans/build-impl.xml" > "${output_folder}/${PLUGINNAME}/nbproject/build-impl.xml"
 	sed -e "s/{{PLUGINNAME}}/$PLUGINNAME/g" "${SCRIPTROOT}/projects/netbeans/project.xml" > "${output_folder}/${PLUGINNAME}/nbproject/project.xml"
 fi
