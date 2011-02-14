@@ -54,8 +54,13 @@ function configure() {
 	cfgPath=$1
 	
 	# Give the user the option to configure their preferences
-	prompt="\n${c_cyan}No ${c_green}config ${c_cyan}file found. Would you like to configure the system? (Y/N): ${c_default}"
-	yes_no config "$prompt"
+	if [ -z "$use_config" ]; then
+		prompt="\n${c_cyan}No ${c_green}config ${c_cyan}file found. Would you like to configure the system? (Y/N): ${c_default}"
+		yes_no config "$prompt"
+	else
+		config=1
+		echo
+	fi
 	
 	if [ $config == 1 ]; then
 		# Start configuration process
@@ -63,13 +68,42 @@ function configure() {
 		echo -ne "${c_cyan}Where would you like to put the source files? (Default: \".\"): ${c_default}"
 		read output_folder
 		if [ -z "$output_folder" ]; then
-			output_folder="\".\""
+			output_folder="."
 		fi
 		
 		# Ask for username
 		prompt="${c_cyan}Author's Username (only letters and numbers):${c_default} "
 		error="${c_red}Error: ${c_white}The username can only be made up of letters and numbers.${c_default}"
 		validation_loop author_username "$prompt" "$error" 0 1 0
+		
+		# Ask for namespace.
+		prompt="${c_cyan}Author's Namespace (usually com.domain.username):${c_default} "
+		error="${c_red}Error: ${c_white}A namespace can only be made up of letters, numbers, \".\" and \"-\".${c_default}"
+		bukkit_error="${c_red}Error: ${c_white}You cannot use Bukkit in your namespace.${c_default}"
+		while :
+		do
+			echo -ne "$prompt"
+			read author_namespace
+			author_namespace=$(echo $author_namespace | tr '[A-Z]' '[a-z]')
+			# Check for a valid namespace
+			# TODO: Create a better regular expression for this
+			if [[ "$author_namespace" =~ '[a-z0-9\.\-]+' ]]; then
+				# Check for use of the Bukkit name
+				if [[ $author_namespace == *bukkit* ]]; then
+					echo -e "$bukkit_error"
+				else
+					if [ "$author_namespace" == "$BASH_REMATCH" ]; then
+						# Remove trailing period from edge case
+						if [ "${author_namespace:(-1)}" == "." ]; then
+							author_namespace="${author_namespace%\.}"
+						fi
+						break
+					else
+						echo -e "$error"
+					fi
+				fi
+			fi
+		done
 		
 		# Ask for user input for config for each IDE. Loop until yes or no.
 		for ide in ${IDE_LIST[@]} ;
@@ -80,7 +114,6 @@ function configure() {
 		done
 		
 		# Write configured file
-		# TODO: Add namespace as a config variable
 		write_config $cfgPath
 		
 	else
@@ -97,6 +130,8 @@ function configure() {
 		write_config $cfgPath
 		source $cfgPath
 	fi
+	
+	echo
 }
 
 # Pause (Getch)
@@ -123,9 +158,9 @@ function read_config(){
 	local cfgPath="$(pwd)/settings.cfg"
 	if [ -a $cfgPath ]; then
 		# There was a config file present, so output its preferences
-		echo -e "\n${c_cyan}Reading ${c_green}config${c_cyan}...${c_default}" >&2
+		echo -e "\n${c_cyan}Reading ${c_green}config${c_cyan}...${c_default}"
 		source $cfgPath
-		echo -e "  ${c_cyan}Creating IDE-specific projects:${c_default}" >&2
+		echo -e "  ${c_cyan}Creating IDE-specific projects:${c_default}"
 		for ide in ${IDE_LIST[@]} ;
 		do
 			set $ide;
@@ -133,8 +168,21 @@ function read_config(){
 			eval gen_var=$gen_var
 			print_generation $ide $gen_var
 		done
-		echo -e "  ${c_cyan}Output Folder:${c_green} \"$output_folder\" ${c_default}" >&2
-		echo -e "  ${c_cyan}Author's Username:${c_green} "$author_username" ${c_default}" >&2
+		echo -e "  ${c_cyan}Output Folder:${c_green} \"$output_folder\" ${c_default}"
+		
+		if [ -n "$author_username" ]; then
+			echo -e "  ${c_cyan}Author's Username:${c_green} "$author_username" ${c_default}"
+		fi
+		if [ -n "$author_namespace" ]; then
+			echo -e "  ${c_cyan}Author's Namespace:${c_green} "$author_namespace" ${c_default}"
+		fi
+		
+		echo
+		
+		yes_no use_config "Do you want to use this configuration? (Y/N): "
+		if [ $use_config == 0 ]; then
+			configure "$cfgPath"
+		fi
 	else
 		configure "$cfgPath"
 	fi
@@ -149,6 +197,7 @@ function write_config() {
 	echo "# General Settings" > $cfgFile
 	echo "output_folder=$output_folder" >> $cfgFile
 	echo "author_username=$author_username" >> $cfgFile
+	echo "author_namespace=$author_namespace" >> $cfgFile
 
 	echo -e "\n# Project File Generation" >> $cfgFile
 
@@ -235,7 +284,7 @@ function validation_loop() {
 function yes_no() {
 	local __resultvar=$1
 	local _result
-	echo -ne $2
+	echo -ne "$2"
 	read _result; _result=$(echo $_result | tr '[A-Z]' '[a-z]')
 	while :
 	do
@@ -295,8 +344,14 @@ PLAYERLISTENER=PlayerListener.java
 YPLAYERLISTENER=${PLUGINNAME}PlayerListener.java 
 PLUGIN=YPlugin.java
 YPLUGIN="${PLUGINNAME}.java"
-ENDPATH="${output_folder}/${PLUGINNAME}/src/${author_username}/${PLUGINNAME}"
 BINPATH="${output_folder}/${PLUGINNAME}/bin"
+BASEPATH="${output_folder}/${PLUGINNAME}/src"
+if [ -z "$author_namespace" ]; then
+	ENDPATH="${output_folder}/${PLUGINNAME}/src/${author_username}/${PLUGINNAME}"
+else
+	namespace=${author_namespace//./\/}
+	ENDPATH="${output_folder}/${PLUGINNAME}/src/${namespace}/${PLUGINNAME}"
+fi
 
 # Create the output directories.
 mkdir -p "${ENDPATH}"
@@ -304,24 +359,30 @@ mkdir -p "${BINPATH}"
 
 # Store our current path, then enter the output area.
 SCRIPTROOT=`pwd`
-cd "${ENDPATH}"
+BASEPATH="${SCRIPTROOT}/${PLUGINNAME}"
 
 # Create our plugin's YAML file.
-cd ../../../
-echo "name: $PLUGINNAME
-
-main: $author_username.$PLUGINNAME
-
-version: $PLUGINVERSION" > plugin.yml
+cd "${BASEPATH}/src"
+if [ -z "$author_namespace" ]; then
+echo "name: $PLUGINNAME\n\nmain: $author_username.$PLUGINNAME\n\nversion: $PLUGINVERSION" > plugin.yml
+else
+echo "name: $PLUGINNAME\n\nmain: $author_namespace.$PLUGINNAME\n\nversion: $PLUGINVERSION" > plugin.yml
+fi
 
 # Inform author_username on status.
 echo -e "${c_cyan}Generating ${c_green}Source Files${c_cyan}..${c_default}"
 
 # Copy the rest of the template files.
 cd "${SCRIPTROOT}"
-sed -e "s/<yourname>/$author_username/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${BLOCKLISTENER}" > "${ENDPATH}/$YBLOCKLISTENER"
-sed -e "s/<yourname>/$author_username/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${PLAYERLISTENER}" > "${ENDPATH}/$YPLAYERLISTENER"
-sed -e "s/<yourname>/$author_username/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${PLUGIN}" > "${ENDPATH}/${PLUGINNAME}.java"
+if [ -n "$author_namespace" ]; then
+	sed -e "s/<namespace>/$author_namespace/g" -e "s/<yourname>/$author_username/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${BLOCKLISTENER}" > "${ENDPATH}/$YBLOCKLISTENER"
+	sed -e "s/<namespace>/$author_namespace/g" -e "s/<yourname>/$author_username/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${PLAYERLISTENER}" > "${ENDPATH}/$YPLAYERLISTENER"
+	sed -e "s/<namespace>/$author_namespace/g" -e "s/<yourname>/$author_username/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${PLUGIN}" > "${ENDPATH}/${PLUGINNAME}.java"
+else
+	sed -e "s/<namespace>/$author_username.$PLUGINNAME/g" -e "s/<yourname>/$author_username/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${BLOCKLISTENER}" > "${ENDPATH}/$YBLOCKLISTENER"
+	sed -e "s/<namespace>/$author_username.$PLUGINNAME/g" -e "s/<yourname>/$author_username/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${PLAYERLISTENER}" > "${ENDPATH}/$YPLAYERLISTENER"
+	sed -e "s/<namespace>/$author_username.$PLUGINNAME/g" -e "s/<yourname>/$author_username/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${PLUGIN}" > "${ENDPATH}/${PLUGINNAME}.java"
+fi
 
 # Project file generation.
 
