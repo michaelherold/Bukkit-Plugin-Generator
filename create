@@ -48,7 +48,7 @@ fi
 IDE_LIST=( Ant Eclipse IntelliJ Netbeans )
 
 # Set up the configuration file, either via a default mode or interactive mode.
-# @param $1 The absolution path of the configuration file.
+# @param $1 The absolute path of the configuration file.
 function configure() {
 	# Grab configuration path
 	cfgPath=$1
@@ -101,6 +101,8 @@ function pause(){
 }
 
 # Print the status of project generation generically
+# @param $1 A string representation of the IDE to check.
+# @param $2 The setting pulled from the configuration file for the IDE.
 function print_generation() {
 	local str_ide="$1"
 	local gen="$2"
@@ -125,8 +127,9 @@ function read_config(){
 			set $ide;
 			local gen_var="\$gen_$(echo $ide | tr '[A-Z]' '[a-z]')"
 			eval gen_var=$gen_var
-			print_generation $1 $gen_var
+			print_generation $ide $gen_var
 		done
+		echo -e "  ${c_cyan}Output Folder:${c_green} \"$output_folder\" ${c_default}" >&2
 	else
 		configure "$cfgPath"
 	fi
@@ -135,6 +138,7 @@ function read_config(){
 }
 
 # Write a config file
+# @param $1 The absolute path to the configuration file.
 function write_config() {
 	local cfgFile=$1
 	echo -e "# General Settings" > $cfgFile
@@ -252,7 +256,7 @@ echo -ne "${c_white} __    ____  _      ____  ___    __   _____  ___   ___  \n/ 
 read_config
 
 # Get and validate user name
-prompt="\n${c_cyan}Username (only letters and numbers):${c_default} "
+prompt="\n${c_cyan}Author's Username (only letters and numbers):${c_default} "
 error="${c_red}Error: ${c_white}The username can only be made up of letters and numbers.${c_default}"
 validation_loop USERNAME "$prompt" "$error" 0 1 0
 
