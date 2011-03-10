@@ -87,9 +87,9 @@ function configure() {
 			author_namespace=$(echo $author_namespace | tr '[A-Z]' '[a-z]')
 			# Check for a valid namespace
 			# TODO: Create a better regular expression for this
-			if [[ "$author_namespace" =~ '[a-z0-9\.\-]+' ]]; then
+			if [[ "$author_namespace" =~ [A-Za-z0-9\.\-]+ ]]; then
 				# Check for use of the Bukkit name
-				if [[ $author_namespace == *bukkit* ]]; then
+				if [[ $author_namespace == *org.bukkit* || $author_namespace == *com.bukkit* || $author_namespace == *net.bukkit* ]]; then
 					echo -e "$bukkit_error"
 				else
 					if [ "$author_namespace" == "$BASH_REMATCH" ]; then
