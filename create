@@ -89,7 +89,7 @@ function configure() {
 			# TODO: Create a better regular expression for this
 			if [[ "$author_namespace" =~ [A-Za-z0-9\.\-]+ ]]; then
 				# Check for use of the Bukkit name
-				if [[ $author_namespace == *org.bukkit* || $author_namespace == *com.bukkit* || $author_namespace == *net.bukkit* ]]; then
+				if [[ $author_namespace == org.bukkit* || $author_namespace == com.bukkit* || $author_namespace == net.bukkit* ]]; then
 					echo -e "$bukkit_error"
 				else
 					if [ "$author_namespace" == "$BASH_REMATCH" ]; then
@@ -338,6 +338,7 @@ ${c_white}Plugin: ${c_green}${PLUGINNAME}
 ${c_white}Version: ${c_blue}${PLUGINVERSION}
 ${c_white}Author: ${c_yellow}${author_username}${c_default}
 "
+PLUGINNAMELC=$(echo $PLUGINNAME | tr '[A-Z]' '[a-z]')
 BLOCKLISTENER=BlockListener.java
 YBLOCKLISTENER=${PLUGINNAME}BlockListener.java
 PLAYERLISTENER=PlayerListener.java
@@ -347,10 +348,10 @@ YPLUGIN="${PLUGINNAME}.java"
 BINPATH="${output_folder}/${PLUGINNAME}/bin"
 BASEPATH="${output_folder}/${PLUGINNAME}/src"
 if [ -z "$author_namespace" ]; then
-	ENDPATH="${output_folder}/${PLUGINNAME}/src/${author_username}/${PLUGINNAME}"
+	ENDPATH="${output_folder}/${PLUGINNAME}/src/${author_username}/${PLUGINNAMELC}"
 else
 	namespace=${author_namespace//./\/}
-	ENDPATH="${output_folder}/${PLUGINNAME}/src/${namespace}/${PLUGINNAME}"
+	ENDPATH="${output_folder}/${PLUGINNAME}/src/${namespace}/${PLUGINNAMELC}"
 fi
 
 # Create the output directories.
@@ -364,9 +365,9 @@ BASEPATH="${SCRIPTROOT}/${PLUGINNAME}"
 # Create our plugin's YAML file.
 cd "${BASEPATH}/src"
 if [ -z "$author_namespace" ]; then
-echo "name: $PLUGINNAME\n\nmain: $author_username.$PLUGINNAME\n\nversion: $PLUGINVERSION" > plugin.yml
+echo -e "name: $PLUGINNAME\n\nmain: $author_username.$PLUGINNAMELC\n\nversion: $PLUGINVERSION" > plugin.yml
 else
-echo "name: $PLUGINNAME\n\nmain: $author_namespace.$PLUGINNAME\n\nversion: $PLUGINVERSION" > plugin.yml
+echo -e "name: $PLUGINNAME\n\nmain: $author_namespace.$PLUGINNAMELC\n\nversion: $PLUGINVERSION" > plugin.yml
 fi
 
 # Inform author_username on status.
@@ -375,13 +376,13 @@ echo -e "${c_cyan}Generating ${c_green}Source Files${c_cyan}..${c_default}"
 # Copy the rest of the template files.
 cd "${SCRIPTROOT}"
 if [ -n "$author_namespace" ]; then
-	sed -e "s/<namespace>/$author_namespace/g" -e "s/<yourname>/$author_username/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${BLOCKLISTENER}" > "${ENDPATH}/$YBLOCKLISTENER"
-	sed -e "s/<namespace>/$author_namespace/g" -e "s/<yourname>/$author_username/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${PLAYERLISTENER}" > "${ENDPATH}/$YPLAYERLISTENER"
-	sed -e "s/<namespace>/$author_namespace/g" -e "s/<yourname>/$author_username/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${PLUGIN}" > "${ENDPATH}/${PLUGINNAME}.java"
+	sed -e "s/<namespace>/$author_namespace.$PLUGINNAMELC/g" -e "s/<yourname>/$author_username/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${BLOCKLISTENER}" > "${ENDPATH}/$YBLOCKLISTENER"
+	sed -e "s/<namespace>/$author_namespace.$PLUGINNAMELC/g" -e "s/<yourname>/$author_username/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${PLAYERLISTENER}" > "${ENDPATH}/$YPLAYERLISTENER"
+	sed -e "s/<namespace>/$author_namespace.$PLUGINNAMELC/g" -e "s/<yourname>/$author_username/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${PLUGIN}" > "${ENDPATH}/${PLUGINNAME}.java"
 else
-	sed -e "s/<namespace>/$author_username.$PLUGINNAME/g" -e "s/<yourname>/$author_username/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${BLOCKLISTENER}" > "${ENDPATH}/$YBLOCKLISTENER"
-	sed -e "s/<namespace>/$author_username.$PLUGINNAME/g" -e "s/<yourname>/$author_username/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${PLAYERLISTENER}" > "${ENDPATH}/$YPLAYERLISTENER"
-	sed -e "s/<namespace>/$author_username.$PLUGINNAME/g" -e "s/<yourname>/$author_username/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${PLUGIN}" > "${ENDPATH}/${PLUGINNAME}.java"
+	sed -e "s/<namespace>/$author_username.$PLUGINNAMELC/g" -e "s/<yourname>/g" -e "s/<yourname>/$author_username/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${BLOCKLISTENER}" > "${ENDPATH}/$YBLOCKLISTENER"
+	sed -e "s/<namespace>/$author_username.$PLUGINNAMELC/g" -e "s/<yourname>/g" -e "s/<yourname>/$author_username/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${PLAYERLISTENER}" > "${ENDPATH}/$YPLAYERLISTENER"
+	sed -e "s/<namespace>/$author_username.$PLUGINNAMELC/g" -e "s/<yourname>/g" -e "s/<yourname>/$author_username/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${PLUGIN}" > "${ENDPATH}/${PLUGINNAME}.java"
 fi
 
 # Project file generation.
