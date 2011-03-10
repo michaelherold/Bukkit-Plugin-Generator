@@ -1,15 +1,11 @@
 package <namespace>;
 
-import java.io.File;
 import java.util.HashMap;
+
 import org.bukkit.entity.Player;
-import org.bukkit.Server;
-import org.bukkit.event.Event.Priority;
-import org.bukkit.event.Event;
 import org.bukkit.plugin.PluginDescriptionFile;
-import org.bukkit.plugin.PluginLoader;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.PluginManager;
+import org.bukkit.plugin.java.JavaPlugin;
 
 /**
  * <pluginname> for Bukkit
@@ -20,15 +16,6 @@ public class <pluginname> extends JavaPlugin {
     private final <pluginname>PlayerListener playerListener = new <pluginname>PlayerListener(this);
     private final <pluginname>BlockListener blockListener = new <pluginname>BlockListener(this);
     private final HashMap<Player, Boolean> debugees = new HashMap<Player, Boolean>();
-
-    public <pluginname>(PluginLoader pluginLoader, Server instance, PluginDescriptionFile desc, File folder, File plugin, ClassLoader cLoader) {
-        super(pluginLoader, instance, desc, folder, plugin, cLoader);
-        // TODO: Place any custom initialisation code here
-
-        // NOTE: Event registration should be done in onEnable not here as all events are unregistered when a plugin is disabled
-    }
-
-   
 
     public void onEnable() {
         // TODO: Place any custom enable code here including the registration of any events
