@@ -46,7 +46,7 @@ elif [[ $_OS == 'mac' ]]; then
 fi
 
 # List of IDEs supported by project generation
-IDE_LIST=( Ant Eclipse IntelliJ Netbeans )
+IDE_LIST=( Ant Eclipse IntelliJ Maven Netbeans )
 
 # Generate banner
 function banner() {
@@ -80,7 +80,7 @@ function configure() {
 		
 		# Ask for username
 		prompt="${CYAN}Author's Username (Type ? for help):${DEFAULT} "
-		helpmsg="${GREEN}------------------------------- USERNAME HELP --------------------------------\n\n\
+		helpmsg="${GREEN}-------------------------------- USERNAME HELP ---------------------------------\n\n\
 ${DEFAULT}Your ${GREEN}username${DEFAULT} should be whatever you want to be known by. This could be your \n\
 real name, or it could be your Minecraft username.\n"
 		error="${RED}Error: ${WHITE}The username can only be made up of letters and numbers.${DEFAULT}"
@@ -88,7 +88,7 @@ real name, or it could be your Minecraft username.\n"
 		
 		# Ask for namespace.
 		prompt="${CYAN}Author's Namespace (Type ? for help):${DEFAULT} "
-		helpmsg="${GREEN}------------------------------- NAMESPACE HELP -------------------------------\n\n\
+		helpmsg="${GREEN}-------------------------------- NAMESPACE HELP --------------------------------\n\n\
 ${DEFAULT}A namespace is an identifier used to differentiate your code from someone \n\
 else's. To figure out your namespace, take the URL of your website and reverse\n\
 it.\n\n\
@@ -125,6 +125,42 @@ If you do not have a website, you can reverse your email address.\n\n\
 							if [ "${NAMESPACE:(-1)}" == "." ]; then
 								NAMESPACE="${NAMESPACE%\.}"
 							fi
+							break
+						else
+							echo -e "$error"
+						fi
+					fi
+				fi
+			fi
+		done
+		
+		# Get user's URL
+		prompt="${CYAN}Author's URL (Type ? for help):${DEFAULT} "
+		helpmsg="${GREEN}-------------------------------- AUTHOR'S URL ---------------------------------\n\n\
+${DEFAULT}Your ${GREEN}URL${DEFAULT} should be the address of your homepace. If you don't \n\
+have a website, you could put in your Facebook profile URL or the URL of any \n\
+website that identifies you.\n"
+		error="${RED}Error: ${DEFAULT} Please enter a valid URL."
+		bukkit_erro="${RED}Error: ${DEFAULT} You cannot use Bukkit's URL."
+		while :
+		do
+			echo -ne "$prompt"
+			read AUTHORURL
+			
+			if [[ "$AUTHORURL" == "?" ]]; then
+				echo -e "$helpmsg"
+			elif [ ! -n "$AUTHORURL" ]; then
+				echo -e "$error"
+			else
+				AUTHORURL=$(echo $AUTHORURL | tr '[A-Z]' '[a-z]')
+				# Check for a valid URL
+				echo $AUTHORURL
+				if [[ "$AUTHORURL" =~ https?://([A-Za-z0-9\.-]+)+(:[0-9]+)?(/([A-Za-z0-9_/_\.]*(\?[^ \t\r\n\v\f]+)?)?)? ]]; then
+					# Check for use of the Bukkit URL
+					if [[ $AUTHORURL == "http://bukkit.org" || $AUTHORURL == "https://bukkit.org" ]]; then
+						echo -e "$bukkit_error"
+					else
+						if [ "$AUTHORURL" == "$BASH_REMATCH" ]; then
 							break
 						else
 							echo -e "$error"
@@ -197,15 +233,17 @@ function read_config(){
 			eval gen_var=$gen_var
 			print_generation $ide $gen_var
 		done
-		echo -e "  ${CYAN}Output Folder:${GREEN} \"$OUTPUTFOLDER\" ${DEFAULT}"
+		echo -e "  ${CYAN}Output Folder: ${GREEN}\"$OUTPUTFOLDER\" ${DEFAULT}"
 		
 		if [ -n "$AUTHOR" ]; then
-			echo -e "  ${CYAN}Author's Username:${GREEN} "$AUTHOR" ${DEFAULT}"
+			echo -e "  ${CYAN}Author's Username: ${GREEN}$AUTHOR ${DEFAULT}"
 		fi
 		if [ -n "$NAMESPACE" ]; then
-			echo -e "  ${CYAN}Author's Namespace:${GREEN} "$NAMESPACE" ${DEFAULT}"
+			echo -e "  ${CYAN}Author's Namespace: ${GREEN}$NAMESPACE ${DEFAULT}"
 		fi
-		
+		if [ -n "$AUTHORURL" ]; then
+			echo -e "  ${CYAN}Author's URL: ${GREEN}$AUTHORURL ${DEFAULT}"
+		fi
 		echo
 		
 		yes_no use_config "Do you want to use this configuration? (Y/N): "
@@ -227,6 +265,7 @@ function write_config() {
 	echo "OUTPUTFOLDER=\"$OUTPUTFOLDER\"" >> $cfgFile
 	echo "AUTHOR=\"$AUTHOR\"" >> $cfgFile
 	echo "NAMESPACE=\"$NAMESPACE\"" >> $cfgFile
+	echo "AUTHORURL=\"$AUTHORURL\"" >> $cfgFile
 
 	echo -e "\n# Project File Generation" >> $cfgFile
 
@@ -464,6 +503,12 @@ fi
 if [ $gen_ant == 1 ]; then
 	echo -e "${CYAN}Generating ${GREEN}Ant Build File${CYAN}..${DEFAULT}"
 	sed -e "s/{{PLUGINNAME}}/$PLUGINNAME/g" "${SCRIPTROOT}/projects/ant/build.xml" > "${OUTPUTFOLDER}/${PLUGINNAME}/build.xml"
+fi
+
+## Apache Maven
+if [ $gen_maven == 1 ]; then
+	echo -e "${CYAN}Generating ${GREEN}Maven Build File${CYAN}..${DEFAULT}"
+	sed  -e "s/{{NAMESPACE}}/$NAMESPACE/g" -e "s/{{PLUGINNAMELC}}/$PLUGINNAMELC/g" -e "s/{{PLUGINNAME}}/$PLUGINNAME/g" -e "s/{{PLUGINVERSION}}/$PLUGINVERSION/g" "${SCRIPTROOT}/projects/maven/pom.xml" > "${OUTPUTFOLDER}/${PLUGINNAME}/pom.xml"
 fi
 
 # Done
