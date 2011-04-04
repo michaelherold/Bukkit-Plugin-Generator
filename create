@@ -88,10 +88,8 @@ real name, or it could be your Minecraft username.\n"
 		
 		# Ask for namespace.
 		prompt="${CYAN}Author's Namespace (Type ? for help):${DEFAULT} "
-		helpmsg="${GREEN}
-------------------------------- NAMESPACE HELP -------------------------------\n\n\
-${DEFAULT}
-A namespace is an identifier used to differentiate your code from someone \n\
+		helpmsg="${GREEN}------------------------------- NAMESPACE HELP -------------------------------\n\n\
+${DEFAULT}A namespace is an identifier used to differentiate your code from someone \n\
 else's. To figure out your namespace, take the URL of your website and reverse\n\
 it.\n\n\
 \
