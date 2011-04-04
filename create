@@ -111,6 +111,8 @@ If you do not have a website, you can reverse your email address.\n\n\
 			
 			if [[ "$author_namespace" == "?" ]]; then
 				echo -e "$helpmsg"
+			elif [ ! -n "$author_namespace" ]; then
+				echo -e "$error"
 			else
 				author_namespace=$(echo $author_namespace | tr '[A-Z]' '[a-z]')
 				# Check for a valid namespace
@@ -241,10 +243,17 @@ function write_config() {
 }
 
 # Input validation.
-function validate_input(){
+function validate_input() {
 	local _true=1; local _false=0
 	# Get the input.
 	local _input=${1}
+	
+	# Disallow blank input
+	if [ ! -n "$_input" ]; then
+		is_valid=$_false
+		return
+	fi
+	
 	# Same as above, but with
 	# dashes and underscores.
 	local _symbols=${2:-$_true}
