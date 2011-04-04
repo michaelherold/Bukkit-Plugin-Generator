@@ -73,9 +73,9 @@ function configure() {
 		# Start configuration process
 		# Ask for output_path. Default to "."
 		echo -ne "${CYAN}Where would you like to put the source files? (Default: \".\"): ${DEFAULT}"
-		read output_folder
-		if [ -z "$output_folder" ]; then
-			output_folder="."
+		read OUTPUTFOLDER
+		if [ -z "$OUTPUTFOLDER" ]; then
+			OUTPUTFOLDER="."
 		fi
 		
 		# Ask for username
@@ -84,7 +84,7 @@ function configure() {
 ${DEFAULT}Your ${GREEN}username${DEFAULT} should be whatever you want to be known by. This could be your \n\
 real name, or it could be your Minecraft username.\n"
 		error="${RED}Error: ${WHITE}The username can only be made up of letters and numbers.${DEFAULT}"
-		validation_loop author_username "$prompt" "$error" "$helpmsg" 0 0 1
+		validation_loop AUTHOR "$prompt" "$error" "$helpmsg" 0 0 1
 		
 		# Ask for namespace.
 		prompt="${CYAN}Author's Namespace (Type ? for help):${DEFAULT} "
@@ -107,25 +107,25 @@ If you do not have a website, you can reverse your email address.\n\n\
 		while :
 		do
 			echo -ne "$prompt"
-			read author_namespace
+			read NAMESPACE
 			
-			if [[ "$author_namespace" == "?" ]]; then
+			if [[ "$NAMESPACE" == "?" ]]; then
 				echo -e "$helpmsg"
-			elif [ ! -n "$author_namespace" ]; then
+			elif [ ! -n "$NAMESPACE" ]; then
 				echo -e "$error"
 			else
-				author_namespace=$(echo $author_namespace | tr '[A-Z]' '[a-z]')
+				NAMESPACE=$(echo $NAMESPACE | tr '[A-Z]' '[a-z]')
 				# Check for a valid namespace
 				# TODO: Create a better regular expression for this
-				if [[ "$author_namespace" =~ [A-Za-z0-9\.\-]+ ]]; then
+				if [[ "$NAMESPACE" =~ [A-Za-z0-9\.\-]+ ]]; then
 					# Check for use of the Bukkit name
-					if [[ $author_namespace == org.bukkit* || $author_namespace == com.bukkit* || $author_namespace == net.bukkit* ]]; then
+					if [[ $NAMESPACE == org.bukkit* || $NAMESPACE == com.bukkit* || $NAMESPACE == net.bukkit* ]]; then
 						echo -e "$bukkit_error"
 					else
-						if [ "$author_namespace" == "$BASH_REMATCH" ]; then
+						if [ "$NAMESPACE" == "$BASH_REMATCH" ]; then
 							# Remove trailing period from edge case
-							if [ "${author_namespace:(-1)}" == "." ]; then
-								author_namespace="${author_namespace%\.}"
+							if [ "${NAMESPACE:(-1)}" == "." ]; then
+								NAMESPACE="${NAMESPACE%\.}"
 							fi
 							break
 						else
@@ -151,7 +151,7 @@ If you do not have a website, you can reverse your email address.\n\n\
 		# If they don't want to configure their preferences, write a default
 		# config with all IDEs set to false
 		echo -e "\n${CYAN}Creating ${GREEN}default config${CYAN}...${DEFAULT}" >&2
-		output_folder="\".\""
+		OUTPUTFOLDER="\".\""
 		for ide in ${IDE_LIST[@]} ;
 		do
 			set $ide;
@@ -199,13 +199,13 @@ function read_config(){
 			eval gen_var=$gen_var
 			print_generation $ide $gen_var
 		done
-		echo -e "  ${CYAN}Output Folder:${GREEN} \"$output_folder\" ${DEFAULT}"
+		echo -e "  ${CYAN}Output Folder:${GREEN} \"$OUTPUTFOLDER\" ${DEFAULT}"
 		
-		if [ -n "$author_username" ]; then
-			echo -e "  ${CYAN}Author's Username:${GREEN} "$author_username" ${DEFAULT}"
+		if [ -n "$AUTHOR" ]; then
+			echo -e "  ${CYAN}Author's Username:${GREEN} "$AUTHOR" ${DEFAULT}"
 		fi
-		if [ -n "$author_namespace" ]; then
-			echo -e "  ${CYAN}Author's Namespace:${GREEN} "$author_namespace" ${DEFAULT}"
+		if [ -n "$NAMESPACE" ]; then
+			echo -e "  ${CYAN}Author's Namespace:${GREEN} "$NAMESPACE" ${DEFAULT}"
 		fi
 		
 		echo
@@ -226,9 +226,9 @@ function read_config(){
 function write_config() {
 	local cfgFile=$1
 	echo "# General Settings" > $cfgFile
-	echo "output_folder=\"$output_folder\"" >> $cfgFile
-	echo "author_username=\"$author_username\"" >> $cfgFile
-	echo "author_namespace=\"$author_namespace\"" >> $cfgFile
+	echo "OUTPUTFOLDER=\"$OUTPUTFOLDER\"" >> $cfgFile
+	echo "AUTHOR=\"$AUTHOR\"" >> $cfgFile
+	echo "NAMESPACE=\"$NAMESPACE\"" >> $cfgFile
 
 	echo -e "\n# Project File Generation" >> $cfgFile
 
@@ -353,10 +353,10 @@ banner
 read_config
 
 # Get and validate user name
-if [ -z "$author_username" ]; then
+if [ -z "$AUTHOR" ]; then
 	prompt="\n${CYAN}Author's Username (only letters and numbers):${DEFAULT} "
 	error="${RED}Error: ${WHITE}The username can only be made up of letters and numbers.${DEFAULT}"
-	validation_loop author_username "$prompt" "$error" 0 1 0
+	validation_loop AUTHOR "$prompt" "$error" 0 1 0
 fi
 
 # Get and validate plugin name
@@ -380,7 +380,7 @@ echo -e "${CYAN}Generating  ${GREEN}manifest${CYAN}..
 
 ${WHITE}Plugin: ${GREEN}${PLUGINNAME}
 ${WHITE}Version: ${BLUE}${PLUGINVERSION}
-${WHITE}Author: ${YELLOW}${author_username}${DEFAULT}
+${WHITE}Author: ${YELLOW}${AUTHOR}${DEFAULT}
 "
 BLOCKLISTENER=BlockListener.java
 YBLOCKLISTENER=${PLUGINNAME}BlockListener.java
@@ -388,13 +388,13 @@ PLAYERLISTENER=PlayerListener.java
 YPLAYERLISTENER=${PLUGINNAME}PlayerListener.java 
 PLUGIN=YPlugin.java
 YPLUGIN="${PLUGINNAME}.java"
-BINPATH="${output_folder}/${PLUGINNAME}/bin"
-BASEPATH="${output_folder}/${PLUGINNAME}/src"
-if [ -z "$author_namespace" ]; then
-	ENDPATH="${output_folder}/${PLUGINNAME}/src/${author_username}/${PLUGINNAMELC}"
+BINPATH="${OUTPUTFOLDER}/${PLUGINNAME}/bin"
+BASEPATH="${OUTPUTFOLDER}/${PLUGINNAME}/src"
+if [ -z "$NAMESPACE" ]; then
+	ENDPATH="${OUTPUTFOLDER}/${PLUGINNAME}/src/${AUTHOR}/${PLUGINNAMELC}"
 else
-	namespace=${author_namespace//./\/}
-	ENDPATH="${output_folder}/${PLUGINNAME}/src/${namespace}/${PLUGINNAMELC}"
+	namespace=${NAMESPACE//./\/}
+	ENDPATH="${OUTPUTFOLDER}/${PLUGINNAME}/src/${namespace}/${PLUGINNAMELC}"
 fi
 
 # Create the output directories.
@@ -407,25 +407,25 @@ BASEPATH="${SCRIPTROOT}/${PLUGINNAME}"
 
 # Create our plugin's YAML file.
 cd "${BASEPATH}/src"
-if [ -z "$author_namespace" ]; then
-echo -e "name: $PLUGINNAME\n\nmain: $author_username.$PLUGINNAMELC\n\nversion: $PLUGINVERSION" > plugin.yml
+if [ -z "$NAMESPACE" ]; then
+echo -e "name: $PLUGINNAME\n\nmain: $AUTHOR.$PLUGINNAMELC\n\nversion: $PLUGINVERSION" > plugin.yml
 else
-echo -e "name: $PLUGINNAME\n\nmain: $author_namespace.$PLUGINNAMELC\n\nversion: $PLUGINVERSION" > plugin.yml
+echo -e "name: $PLUGINNAME\n\nmain: $NAMESPACE.$PLUGINNAMELC\n\nversion: $PLUGINVERSION" > plugin.yml
 fi
 
-# Inform author_username on status.
+# Inform AUTHOR on status.
 echo -e "${CYAN}Generating ${GREEN}Source Files${CYAN}..${DEFAULT}"
 
 # Copy the rest of the template files.
 cd "${SCRIPTROOT}"
-if [ -n "$author_namespace" ]; then
-	sed -e "s/<namespace>/$author_namespace.$PLUGINNAMELC/g" -e "s/<yourname>/$author_username/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${BLOCKLISTENER}" > "${ENDPATH}/$YBLOCKLISTENER"
-	sed -e "s/<namespace>/$author_namespace.$PLUGINNAMELC/g" -e "s/<yourname>/$author_username/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${PLAYERLISTENER}" > "${ENDPATH}/$YPLAYERLISTENER"
-	sed -e "s/<namespace>/$author_namespace.$PLUGINNAMELC/g" -e "s/<yourname>/$author_username/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${PLUGIN}" > "${ENDPATH}/${PLUGINNAME}.java"
+if [ -n "$NAMESPACE" ]; then
+	sed -e "s/<namespace>/$NAMESPACE.$PLUGINNAMELC/g" -e "s/<yourname>/$AUTHOR/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${BLOCKLISTENER}" > "${ENDPATH}/$YBLOCKLISTENER"
+	sed -e "s/<namespace>/$NAMESPACE.$PLUGINNAMELC/g" -e "s/<yourname>/$AUTHOR/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${PLAYERLISTENER}" > "${ENDPATH}/$YPLAYERLISTENER"
+	sed -e "s/<namespace>/$NAMESPACE.$PLUGINNAMELC/g" -e "s/<yourname>/$AUTHOR/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${PLUGIN}" > "${ENDPATH}/${PLUGINNAME}.java"
 else
-	sed -e "s/<namespace>/$author_username.$PLUGINNAMELC/g" -e "s/<yourname>/$author_username/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${BLOCKLISTENER}" > "${ENDPATH}/$YBLOCKLISTENER"
-	sed -e "s/<namespace>/$author_username.$PLUGINNAMELC/g" -e "s/<yourname>/$author_username/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${PLAYERLISTENER}" > "${ENDPATH}/$YPLAYERLISTENER"
-	sed -e "s/<namespace>/$author_username.$PLUGINNAMELC/g" -e "s/<yourname>/$author_username/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${PLUGIN}" > "${ENDPATH}/${PLUGINNAME}.java"
+	sed -e "s/<namespace>/$AUTHOR.$PLUGINNAMELC/g" -e "s/<yourname>/$AUTHOR/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${BLOCKLISTENER}" > "${ENDPATH}/$YBLOCKLISTENER"
+	sed -e "s/<namespace>/$AUTHOR.$PLUGINNAMELC/g" -e "s/<yourname>/$AUTHOR/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${PLAYERLISTENER}" > "${ENDPATH}/$YPLAYERLISTENER"
+	sed -e "s/<namespace>/$AUTHOR.$PLUGINNAMELC/g" -e "s/<yourname>/$AUTHOR/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${PLUGIN}" > "${ENDPATH}/${PLUGINNAME}.java"
 fi
 
 # Project file generation.
@@ -433,39 +433,39 @@ fi
 ## Eclipse
 if [ $gen_eclipse == 1 ]; then
 	echo -e "${CYAN}Generating ${GREEN}Eclipse Project Files${CYAN}..${DEFAULT}"
-	sed -e "s/{{PLUGINNAME}}/$PLUGINNAME/g" "${SCRIPTROOT}/projects/eclipse/.project" > "${output_folder}/${PLUGINNAME}/.project"
-	cp "${SCRIPTROOT}/projects/eclipse/.classpath" "${output_folder}/${PLUGINNAME}/.classpath"
+	sed -e "s/{{PLUGINNAME}}/$PLUGINNAME/g" "${SCRIPTROOT}/projects/eclipse/.project" > "${OUTPUTFOLDER}/${PLUGINNAME}/.project"
+	cp "${SCRIPTROOT}/projects/eclipse/.classpath" "${OUTPUTFOLDER}/${PLUGINNAME}/.classpath"
 fi
 
 ## IntelliJ
 if [ $gen_intellij == 1 ]; then
 	echo -e "${CYAN}Generating ${GREEN}Intelli-J Project Files${CYAN}..${DEFAULT}"
-	mkdir -p "${output_folder}/${PLUGINNAME}/.idea"
-	echo -n "${PLUGINNAME}" > "${output_folder}/${PLUGINNAME}/.idea/.name"
-	cp "${SCRIPTROOT}/projects/intellij/compiler.xml" "${output_folder}/${PLUGINNAME}/.idea/compiler.xml"
-	cp "${SCRIPTROOT}/projects/intellij/encodings.xml" "${output_folder}/${PLUGINNAME}/.idea/encodings.xml"
-	cp "${SCRIPTROOT}/projects/intellij/vcs.xml" "${output_folder}/${PLUGINNAME}/.idea/vcs.xml"
-	cp "${SCRIPTROOT}/projects/intellij/project.iml" "${output_folder}/${PLUGINNAME}/${PLUGINNAME}.iml"
-	sed -e "s/{{PLUGINNAME}}/$PLUGINNAME/g" "${SCRIPTROOT}/projects/intellij/modules.xml" > "${output_folder}/${PLUGINNAME}/.idea/modules.xml"
-	sed -e "s/{{PLUGINNAME}}/$PLUGINNAME/g" "${SCRIPTROOT}/projects/intellij/workspace.xml" > "${output_folder}/${PLUGINNAME}/.idea/workspace.xml"
+	mkdir -p "${OUTPUTFOLDER}/${PLUGINNAME}/.idea"
+	echo -n "${PLUGINNAME}" > "${OUTPUTFOLDER}/${PLUGINNAME}/.idea/.name"
+	cp "${SCRIPTROOT}/projects/intellij/compiler.xml" "${OUTPUTFOLDER}/${PLUGINNAME}/.idea/compiler.xml"
+	cp "${SCRIPTROOT}/projects/intellij/encodings.xml" "${OUTPUTFOLDER}/${PLUGINNAME}/.idea/encodings.xml"
+	cp "${SCRIPTROOT}/projects/intellij/vcs.xml" "${OUTPUTFOLDER}/${PLUGINNAME}/.idea/vcs.xml"
+	cp "${SCRIPTROOT}/projects/intellij/project.iml" "${OUTPUTFOLDER}/${PLUGINNAME}/${PLUGINNAME}.iml"
+	sed -e "s/{{PLUGINNAME}}/$PLUGINNAME/g" "${SCRIPTROOT}/projects/intellij/modules.xml" > "${OUTPUTFOLDER}/${PLUGINNAME}/.idea/modules.xml"
+	sed -e "s/{{PLUGINNAME}}/$PLUGINNAME/g" "${SCRIPTROOT}/projects/intellij/workspace.xml" > "${OUTPUTFOLDER}/${PLUGINNAME}/.idea/workspace.xml"
 fi
 
 ## NetBeans
 if [ $gen_netbeans == 1 ]; then
 	echo -e "${CYAN}Generating ${GREEN}Netbeans Project Files${CYAN}..${DEFAULT}"
-	mkdir -p "${output_folder}/${PLUGINNAME}/nbproject"
-	mkdir -p "${output_folder}/${PLUGINNAME}/nbproject/private"
-	cp "${SCRIPTROOT}/projects/netbeans/genfiles.properties" "${output_folder}/${PLUGINNAME}/nbproject/genfiles.properties"
-	cp "${SCRIPTROOT}/projects/netbeans/private/private.properties" "${output_folder}/${PLUGINNAME}/nbproject/private/private.properties"
-	sed -e "s/{{author_username}}/$author_username/g" -e "s/{{PLUGINNAME}}/$PLUGINNAME/g" "${SCRIPTROOT}/projects/netbeans/project.properties" > "${output_folder}/${PLUGINNAME}/nbproject/project.properties"
-	sed -e "s/{{PLUGINNAME}}/$PLUGINNAME/g" "${SCRIPTROOT}/projects/netbeans/build-impl.xml" > "${output_folder}/${PLUGINNAME}/nbproject/build-impl.xml"
-	sed -e "s/{{PLUGINNAME}}/$PLUGINNAME/g" "${SCRIPTROOT}/projects/netbeans/project.xml" > "${output_folder}/${PLUGINNAME}/nbproject/project.xml"
+	mkdir -p "${OUTPUTFOLDER}/${PLUGINNAME}/nbproject"
+	mkdir -p "${OUTPUTFOLDER}/${PLUGINNAME}/nbproject/private"
+	cp "${SCRIPTROOT}/projects/netbeans/genfiles.properties" "${OUTPUTFOLDER}/${PLUGINNAME}/nbproject/genfiles.properties"
+	cp "${SCRIPTROOT}/projects/netbeans/private/private.properties" "${OUTPUTFOLDER}/${PLUGINNAME}/nbproject/private/private.properties"
+	sed -e "s/{{AUTHOR}}/$AUTHOR/g" -e "s/{{PLUGINNAME}}/$PLUGINNAME/g" "${SCRIPTROOT}/projects/netbeans/project.properties" > "${OUTPUTFOLDER}/${PLUGINNAME}/nbproject/project.properties"
+	sed -e "s/{{PLUGINNAME}}/$PLUGINNAME/g" "${SCRIPTROOT}/projects/netbeans/build-impl.xml" > "${OUTPUTFOLDER}/${PLUGINNAME}/nbproject/build-impl.xml"
+	sed -e "s/{{PLUGINNAME}}/$PLUGINNAME/g" "${SCRIPTROOT}/projects/netbeans/project.xml" > "${OUTPUTFOLDER}/${PLUGINNAME}/nbproject/project.xml"
 fi
 
 ## Apache Ant
 if [ $gen_ant == 1 ]; then
 	echo -e "${CYAN}Generating ${GREEN}Ant Build File${CYAN}..${DEFAULT}"
-	sed -e "s/{{PLUGINNAME}}/$PLUGINNAME/g" "${SCRIPTROOT}/projects/ant/build.xml" > "${output_folder}/${PLUGINNAME}/build.xml"
+	sed -e "s/{{PLUGINNAME}}/$PLUGINNAME/g" "${SCRIPTROOT}/projects/ant/build.xml" > "${OUTPUTFOLDER}/${PLUGINNAME}/build.xml"
 fi
 
 # Done
