@@ -25,23 +25,24 @@ fi
 # Set up the ANSI escape colors depending on OS.
 if [[ $_OS == 'linux' || $_OS == 'nt' ]]; then
 	# Standard ANSI escape codes.
-	c_default='\e[0;37m'
-	c_white='\e[1;37m'
-	c_cyan='\e[1;36m'
-	c_green='\e[1;32m'
-	c_red='\e[0;31m'
-	c_blue='\e[1;34m'
-	c_yellow='\e[1;33m'
+	DEFAULT='\e[0m'
+	RED='\e[1;31m'
+	GREEN='\e[1;32m'
+	YELLOW='\e[1;33m'
+	BLUE='\e[1;34m'
+	MAGENTA='\e[1;35m'
+	CYAN='\e[1;36m'
+	WHITE='\e[1;37m'
 elif [[ $_OS == 'mac' ]]; then
-	# For Mac OS X, we have to do it slightly
-	# different.
-	c_default='\033[0;37m'
-	c_white='\033[1;37m'
-	c_cyan='\033[1;36m'
-	c_green='\033[1;32m'
-	c_red='\033[0;31m'
-	c_blue='\033[1;34m'
-	c_yellow='\033[1;33m'
+	# For Mac OS X, we have to do it slightly different.
+	DEFAULT='\033[0m'
+	RED='\033[1;31m'
+	GREEN='\033[1;32m'
+	YELLOW='\033[1;33m'
+	BLUE='\033[1;34m'
+	MAGENTA='\033[1;35m'
+	CYAN='\033[1;36m'
+	WHITE='\033[1;37m'
 fi
 
 # List of IDEs supported by project generation
@@ -55,7 +56,7 @@ function configure() {
 	
 	# Give the user the option to configure their preferences
 	if [ -z "$use_config" ]; then
-		prompt="\n${c_cyan}No ${c_green}config ${c_cyan}file found. Would you like to configure the system? (Y/N): ${c_default}"
+		prompt="\n${CYAN}No ${GREEN}config ${CYAN}file found. Would you like to configure the system? (Y/N): ${DEFAULT}"
 		yes_no config "$prompt"
 	else
 		config=1
@@ -65,37 +66,38 @@ function configure() {
 	if [ $config == 1 ]; then
 		# Start configuration process
 		# Ask for output_path. Default to "."
-		echo -ne "${c_cyan}Where would you like to put the source files? (Default: \".\"): ${c_default}"
+		echo -ne "${CYAN}Where would you like to put the source files? (Default: \".\"): ${DEFAULT}"
 		read output_folder
 		if [ -z "$output_folder" ]; then
 			output_folder="."
 		fi
 		
 		# Ask for username
-		prompt="${c_cyan}Author's Username (Type ? for help):${c_default} "
-		helpmsg="  ${c_green}Username Help\n\
-${c_default}Your ${c_green}username${c_default} should be whatever you want \
-to be known by. This could be your real name, or it could be your Minecraft \
-username."
-		error="${c_red}Error: ${c_white}The username can only be made up of letters and numbers.${c_default}"
+		prompt="${CYAN}Author's Username (Type ? for help):${DEFAULT} "
+		helpmsg="${GREEN}------------------------------- USERNAME HELP --------------------------------\n\n\
+${DEFAULT}Your ${GREEN}username${DEFAULT} should be whatever you want to be known by. This could be your \n\
+real name, or it could be your Minecraft username.\n"
+		error="${RED}Error: ${WHITE}The username can only be made up of letters and numbers.${DEFAULT}"
 		validation_loop author_username "$prompt" "$error" "$helpmsg" 0 0 1
 		
 		# Ask for namespace.
-		prompt="${c_cyan}Author's Namespace (Type ? for help):${c_default} "
-		helpmsg="  ${c_green}Namespace Help\n\
-${c_default}A namespace is an identifier used to differentiate your code from\
-someone else's.\nTo figure out your namespace, take the URL of your website \
-and reverse it.\n\n\
+		prompt="${CYAN}Author's Namespace (Type ? for help):${DEFAULT} "
+		helpmsg="${GREEN}
+------------------------------- NAMESPACE HELP -------------------------------\n\n\
+${DEFAULT}
+A namespace is an identifier used to differentiate your code from someone \n\
+else's. To figure out your namespace, take the URL of your website and reverse\n\
+it.\n\n\
 \
-  For example, if your website was ${c_green}minecraft.net${c_default}, your \
-namespace would be ${c_green} net.minecraft${c_default}.\n\n\
+  For example, if your website was ${GREEN}minecraft.net${DEFAULT}, your namespace would be\n\
+  ${GREEN}net.minecraft${DEFAULT}.\n\n\
 \
 If you do not have a website, you can reverse your email address.\n\n\
 \
-  For example, if your email address was ${c_green}jane@doe.com${c_default}, \
-your \"namespace\" could be ${c_green}com.doe.jane${c_default}."
-		error="${c_red}Error: ${c_white}A namespace can only be made up of letters, numbers, \".\" and \"-\".${c_default}"
-		bukkit_error="${c_red}Error: ${c_white}You cannot use Bukkit's namespace.${c_default}"
+  For example, if your email address was ${GREEN}jane@doe.com${DEFAULT}, your \"namespace\" could \n\
+  be ${GREEN}com.doe.jane${DEFAULT}.\n"
+		error="${RED}Error: ${WHITE}A namespace can only be made up of letters, numbers, \".\" and \"-\".${DEFAULT}"
+		bukkit_error="${RED}Error: ${WHITE}You cannot use Bukkit's namespace.${DEFAULT}"
 		while :
 		do
 			echo -ne "$prompt"
@@ -131,7 +133,7 @@ your \"namespace\" could be ${c_green}com.doe.jane${c_default}."
 		do
 			set $ide;
 			local gen_var="gen_$(echo $ide | tr '[A-Z]' '[a-z]')"
-			yes_no $gen_var "${c_cyan}Would you like to build a project for $ide? (Y/N): ${c_default}"
+			yes_no $gen_var "${CYAN}Would you like to build a project for $ide? (Y/N): ${DEFAULT}"
 		done
 		
 		# Write configured file
@@ -140,7 +142,7 @@ your \"namespace\" could be ${c_green}com.doe.jane${c_default}."
 	else
 		# If they don't want to configure their preferences, write a default
 		# config with all IDEs set to false
-		echo -e "\n${c_cyan}Creating ${c_green}default config${c_cyan}...${c_default}" >&2
+		echo -e "\n${CYAN}Creating ${GREEN}default config${CYAN}...${DEFAULT}" >&2
 		output_folder="\".\""
 		for ide in ${IDE_LIST[@]} ;
 		do
@@ -166,11 +168,11 @@ function pause(){
 function print_generation() {
 	local str_ide="$1"
 	local gen="$2"
-	echo -ne "    ${str_ide}${c_default}: " >&2
+	echo -ne "    ${str_ide}${DEFAULT}: " >&2
 	if [ $gen == 1 ]; then
-		echo -e "${c_green}True${c_default}" >&2
+		echo -e "${GREEN}True${DEFAULT}" >&2
 	else
-		echo -e "${c_red}False${c_default}" >&2
+		echo -e "${RED}False${DEFAULT}" >&2
 	fi
 }
 
@@ -179,9 +181,9 @@ function read_config(){
 	local cfgPath="$(pwd)/settings.cfg"
 	if [ -a $cfgPath ]; then
 		# There was a config file present, so output its preferences
-		echo -e "\n${c_cyan}Reading ${c_green}config${c_cyan}...${c_default}"
+		echo -e "\n${CYAN}Reading ${GREEN}config${CYAN}...${DEFAULT}"
 		source $cfgPath
-		echo -e "  ${c_cyan}Creating IDE-specific projects:${c_default}"
+		echo -e "  ${CYAN}Creating IDE-specific projects:${DEFAULT}"
 		for ide in ${IDE_LIST[@]} ;
 		do
 			set $ide;
@@ -189,13 +191,13 @@ function read_config(){
 			eval gen_var=$gen_var
 			print_generation $ide $gen_var
 		done
-		echo -e "  ${c_cyan}Output Folder:${c_green} \"$output_folder\" ${c_default}"
+		echo -e "  ${CYAN}Output Folder:${GREEN} \"$output_folder\" ${DEFAULT}"
 		
 		if [ -n "$author_username" ]; then
-			echo -e "  ${c_cyan}Author's Username:${c_green} "$author_username" ${c_default}"
+			echo -e "  ${CYAN}Author's Username:${GREEN} "$author_username" ${DEFAULT}"
 		fi
 		if [ -n "$author_namespace" ]; then
-			echo -e "  ${c_cyan}Author's Namespace:${c_green} "$author_namespace" ${c_default}"
+			echo -e "  ${CYAN}Author's Namespace:${GREEN} "$author_namespace" ${DEFAULT}"
 		fi
 		
 		echo
@@ -245,7 +247,7 @@ function validate_input(){
 	local _numbers=${3:-$_true}
 	# Finally, anything
 	local _anything=${4:-$_false}
-	if [ $_anything == $_true ]; then
+	if [[ $_anything == $_true ]]; then
 		is_valid=$_true
 		return
 	fi
@@ -317,7 +319,7 @@ function yes_no() {
 		if [ "$_result" == "y" -o "$_result" == "n" ]; then
 			break;
 		fi
-		echo -n "Input not recognized. Please enter Y or N: "
+		echo -ne "${RED}Error: ${DEFAULT}Input not recognized. Please enter Y or N: "
 		read _result; _result=$(echo $_result | tr '[A-Z]' '[a-z]')
 	done
 	
@@ -338,20 +340,20 @@ read_config
 
 # Get and validate user name
 if [ -z "$author_username" ]; then
-	prompt="\n${c_cyan}Author's Username (only letters and numbers):${c_default} "
-	error="${c_red}Error: ${c_white}The username can only be made up of letters and numbers.${c_default}"
+	prompt="\n${CYAN}Author's Username (only letters and numbers):${DEFAULT} "
+	error="${RED}Error: ${WHITE}The username can only be made up of letters and numbers.${DEFAULT}"
 	validation_loop author_username "$prompt" "$error" 0 1 0
 fi
 
 # Get and validate plugin name
-prompt="${c_cyan}Plugin's name:${c_default} "
-error="${c_red}Error: ${c_white}The plugin's name can only be made up of letters.${c_default}"
+prompt="${CYAN}Plugin's name:${DEFAULT} "
+error="${RED}Error: ${WHITE}The plugin's name can only be made up of letters.${DEFAULT}"
 validation_loop PLUGINNAME "$prompt" "$error" 0 0 0 # Disallow numbers and symbols
 PLUGINNAME=$(echo $PLUGINNAME | awk '{printf("%s%s\n",toupper(substr($0,1,1)),substr($0,2))}')
 PLUGINNAMELC=$(echo $PLUGINNAME | tr '[A-Z]' '[a-z]')
 
 # Get and validate the version
-prompt="${c_cyan}Plugin Version (${c_default}0.1${c_cyan} by default):${c_default} "
+prompt="${CYAN}Plugin Version (${DEFAULT}0.1${CYAN} by default):${DEFAULT} "
 echo -ne "$prompt"; read PLUGINVERSION
 PLUGINVERSION=${PLUGINVERSION:-0.1}
 validate_input "$PLUGINVERSION" 1 1 1 # Put whatever you want here.
@@ -360,11 +362,11 @@ if [ $is_valid == 0 ]; then
 fi
 
 # Set the filenames and paths.
-echo -e "${c_cyan}Generating  ${c_green}manifest${c_cyan}..
+echo -e "${CYAN}Generating  ${GREEN}manifest${CYAN}..
 
-${c_white}Plugin: ${c_green}${PLUGINNAME}
-${c_white}Version: ${c_blue}${PLUGINVERSION}
-${c_white}Author: ${c_yellow}${author_username}${c_default}
+${WHITE}Plugin: ${GREEN}${PLUGINNAME}
+${WHITE}Version: ${BLUE}${PLUGINVERSION}
+${WHITE}Author: ${YELLOW}${author_username}${DEFAULT}
 "
 BLOCKLISTENER=BlockListener.java
 YBLOCKLISTENER=${PLUGINNAME}BlockListener.java
@@ -398,7 +400,7 @@ echo -e "name: $PLUGINNAME\n\nmain: $author_namespace.$PLUGINNAMELC\n\nversion: 
 fi
 
 # Inform author_username on status.
-echo -e "${c_cyan}Generating ${c_green}Source Files${c_cyan}..${c_default}"
+echo -e "${CYAN}Generating ${GREEN}Source Files${CYAN}..${DEFAULT}"
 
 # Copy the rest of the template files.
 cd "${SCRIPTROOT}"
@@ -416,14 +418,14 @@ fi
 
 ## Eclipse
 if [ $gen_eclipse == 1 ]; then
-	echo -e "${c_cyan}Generating ${c_green}Eclipse Project Files${c_cyan}..${c_default}"
+	echo -e "${CYAN}Generating ${GREEN}Eclipse Project Files${CYAN}..${DEFAULT}"
 	sed -e "s/{{PLUGINNAME}}/$PLUGINNAME/g" "${SCRIPTROOT}/projects/eclipse/.project" > "${output_folder}/${PLUGINNAME}/.project"
 	cp "${SCRIPTROOT}/projects/eclipse/.classpath" "${output_folder}/${PLUGINNAME}/.classpath"
 fi
 
 ## IntelliJ
 if [ $gen_intellij == 1 ]; then
-	echo -e "${c_cyan}Generating ${c_green}Intelli-J Project Files${c_cyan}..${c_default}"
+	echo -e "${CYAN}Generating ${GREEN}Intelli-J Project Files${CYAN}..${DEFAULT}"
 	mkdir -p "${output_folder}/${PLUGINNAME}/.idea"
 	echo -n "${PLUGINNAME}" > "${output_folder}/${PLUGINNAME}/.idea/.name"
 	cp "${SCRIPTROOT}/projects/intellij/compiler.xml" "${output_folder}/${PLUGINNAME}/.idea/compiler.xml"
@@ -436,7 +438,7 @@ fi
 
 ## NetBeans
 if [ $gen_netbeans == 1 ]; then
-	echo -e "${c_cyan}Generating ${c_green}Netbeans Project Files${c_cyan}..${c_default}"
+	echo -e "${CYAN}Generating ${GREEN}Netbeans Project Files${CYAN}..${DEFAULT}"
 	mkdir -p "${output_folder}/${PLUGINNAME}/nbproject"
 	mkdir -p "${output_folder}/${PLUGINNAME}/nbproject/private"
 	cp "${SCRIPTROOT}/projects/netbeans/genfiles.properties" "${output_folder}/${PLUGINNAME}/nbproject/genfiles.properties"
@@ -448,13 +450,13 @@ fi
 
 ## Apache Ant
 if [ $gen_ant == 1 ]; then
-	echo -e "${c_cyan}Generating ${c_green}Ant Build File${c_cyan}..${c_default}"
+	echo -e "${CYAN}Generating ${GREEN}Ant Build File${CYAN}..${DEFAULT}"
 	sed -e "s/{{PLUGINNAME}}/$PLUGINNAME/g" "${SCRIPTROOT}/projects/ant/build.xml" > "${output_folder}/${PLUGINNAME}/build.xml"
 fi
 
 # Done
-echo -e "\n${c_cyan}~~~${c_green} Done! ${c_cyan}~~~${c_default}"
-echo -e "\n\n${c_yellow}NOTE: ${c_white}You will need to add a reference to wherever you keep Bukkit's jar file if you decided to generate an IDE project/build file. Look for this integrated into this script later.${c_default}\n"
+echo -e "\n${CYAN}~~~${GREEN} Done! ${CYAN}~~~${DEFAULT}"
+echo -e "\n\n${YELLOW}NOTE: ${WHITE}You will need to add a reference to wherever you keep Bukkit's jar file if you decided to generate an IDE project/build file. Look for this integrated into this script later.${DEFAULT}\n"
 if [ $_OS -a $_OS != 'nt' ]; then
 	pause
 fi
