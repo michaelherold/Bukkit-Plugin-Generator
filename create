@@ -72,34 +72,55 @@ function configure() {
 		fi
 		
 		# Ask for username
-		prompt="${c_cyan}Author's Username (only letters and numbers):${c_default} "
+		prompt="${c_cyan}Author's Username (Type ? for help):${c_default} "
+		helpmsg="  ${c_green}Username Help\n\
+${c_default}Your ${c_green}username${c_default} should be whatever you want \
+to be known by. This could be your real name, or it could be your Minecraft \
+username."
 		error="${c_red}Error: ${c_white}The username can only be made up of letters and numbers.${c_default}"
-		validation_loop author_username "$prompt" "$error" 0 1 0
+		validation_loop author_username "$prompt" "$error" "$helpmsg" 0 0 1
 		
 		# Ask for namespace.
-		prompt="${c_cyan}Author's Namespace (usually com.domain.username):${c_default} "
+		prompt="${c_cyan}Author's Namespace (Type ? for help):${c_default} "
+		helpmsg="  ${c_green}Namespace Help\n\
+${c_default}A namespace is an identifier used to differentiate your code from\
+someone else's.\nTo figure out your namespace, take the URL of your website \
+and reverse it.\n\n\
+\
+  For example, if your website was ${c_green}minecraft.net${c_default}, your \
+namespace would be ${c_green} net.minecraft${c_default}.\n\n\
+\
+If you do not have a website, you can reverse your email address.\n\n\
+\
+  For example, if your email address was ${c_green}jane@doe.com${c_default}, \
+your \"namespace\" could be ${c_green}com.doe.jane${c_default}."
 		error="${c_red}Error: ${c_white}A namespace can only be made up of letters, numbers, \".\" and \"-\".${c_default}"
-		bukkit_error="${c_red}Error: ${c_white}You cannot use Bukkit in your namespace.${c_default}"
+		bukkit_error="${c_red}Error: ${c_white}You cannot use Bukkit's namespace.${c_default}"
 		while :
 		do
 			echo -ne "$prompt"
 			read author_namespace
-			author_namespace=$(echo $author_namespace | tr '[A-Z]' '[a-z]')
-			# Check for a valid namespace
-			# TODO: Create a better regular expression for this
-			if [[ "$author_namespace" =~ [A-Za-z0-9\.\-]+ ]]; then
-				# Check for use of the Bukkit name
-				if [[ $author_namespace == org.bukkit* || $author_namespace == com.bukkit* || $author_namespace == net.bukkit* ]]; then
-					echo -e "$bukkit_error"
-				else
-					if [ "$author_namespace" == "$BASH_REMATCH" ]; then
-						# Remove trailing period from edge case
-						if [ "${author_namespace:(-1)}" == "." ]; then
-							author_namespace="${author_namespace%\.}"
-						fi
-						break
+			
+			if [[ "$author_namespace" == "?" ]]; then
+				echo -e "$helpmsg"
+			else
+				author_namespace=$(echo $author_namespace | tr '[A-Z]' '[a-z]')
+				# Check for a valid namespace
+				# TODO: Create a better regular expression for this
+				if [[ "$author_namespace" =~ [A-Za-z0-9\.\-]+ ]]; then
+					# Check for use of the Bukkit name
+					if [[ $author_namespace == org.bukkit* || $author_namespace == com.bukkit* || $author_namespace == net.bukkit* ]]; then
+						echo -e "$bukkit_error"
 					else
-						echo -e "$error"
+						if [ "$author_namespace" == "$BASH_REMATCH" ]; then
+							# Remove trailing period from edge case
+							if [ "${author_namespace:(-1)}" == "." ]; then
+								author_namespace="${author_namespace%\.}"
+							fi
+							break
+						else
+							echo -e "$error"
+						fi
 					fi
 				fi
 			fi
@@ -128,7 +149,7 @@ function configure() {
 			eval ${gen_var#$}=0
 		done
 		write_config $cfgPath
-		source $cfgPath
+		source $cfgPath 
 	fi
 	
 	echo
@@ -195,9 +216,9 @@ function read_config(){
 function write_config() {
 	local cfgFile=$1
 	echo "# General Settings" > $cfgFile
-	echo "output_folder=$output_folder" >> $cfgFile
-	echo "author_username=$author_username" >> $cfgFile
-	echo "author_namespace=$author_namespace" >> $cfgFile
+	echo "output_folder=\"$output_folder\"" >> $cfgFile
+	echo "author_username=\"$author_username\"" >> $cfgFile
+	echo "author_namespace=\"$author_namespace\"" >> $cfgFile
 
 	echo -e "\n# Project File Generation" >> $cfgFile
 
@@ -259,20 +280,25 @@ function validate_input(){
 # @param $1 The variable to validate.
 # @param $2 The input prompt.
 # @param $3 The error message.
-# @param $4 Flag controlling allowance of dashes and underscores.
-# @param $5 Flag controlling allowance of numbers.
-# @param $6 Flag toggling validation off (i.e. allowing anything).
+# @param $4 The help message.
+# @param $5 Flag controlling allowance of dashes and underscores.
+# @param $6 Flag controlling allowance of numbers.
+# @param $7 Flag toggling validation off (i.e. allowing anything).
 function validation_loop() {
 	while :
 	do
 		local __resultvar=$1
 		local _result
 		echo -ne "$2"; read _result
-		validate_input "$_result" $4 $5 $6
-		if [ $is_valid == 1 ]; then
-			break
+		if [[ "$_result" == "?" ]]; then
+			echo -e "$4"
+		else
+			validate_input "$_result" $5 $6 $7
+			if [ $is_valid == 1 ]; then
+				break
+			fi
+			echo -e "$3"
 		fi
-		echo -e "$3"
 	done
 	eval $__resultvar="'$_result'"
 	is_valid=0
@@ -321,6 +347,8 @@ fi
 prompt="${c_cyan}Plugin's name:${c_default} "
 error="${c_red}Error: ${c_white}The plugin's name can only be made up of letters.${c_default}"
 validation_loop PLUGINNAME "$prompt" "$error" 0 0 0 # Disallow numbers and symbols
+PLUGINNAME=$(echo $PLUGINNAME | awk '{printf("%s%s\n",toupper(substr($0,1,1)),substr($0,2))}')
+PLUGINNAMELC=$(echo $PLUGINNAME | tr '[A-Z]' '[a-z]')
 
 # Get and validate the version
 prompt="${c_cyan}Plugin Version (${c_default}0.1${c_cyan} by default):${c_default} "
@@ -338,7 +366,6 @@ ${c_white}Plugin: ${c_green}${PLUGINNAME}
 ${c_white}Version: ${c_blue}${PLUGINVERSION}
 ${c_white}Author: ${c_yellow}${author_username}${c_default}
 "
-PLUGINNAMELC=$(echo $PLUGINNAME | tr '[A-Z]' '[a-z]')
 BLOCKLISTENER=BlockListener.java
 YBLOCKLISTENER=${PLUGINNAME}BlockListener.java
 PLAYERLISTENER=PlayerListener.java
@@ -380,9 +407,9 @@ if [ -n "$author_namespace" ]; then
 	sed -e "s/<namespace>/$author_namespace.$PLUGINNAMELC/g" -e "s/<yourname>/$author_username/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${PLAYERLISTENER}" > "${ENDPATH}/$YPLAYERLISTENER"
 	sed -e "s/<namespace>/$author_namespace.$PLUGINNAMELC/g" -e "s/<yourname>/$author_username/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${PLUGIN}" > "${ENDPATH}/${PLUGINNAME}.java"
 else
-	sed -e "s/<namespace>/$author_username.$PLUGINNAMELC/g" -e "s/<yourname>/g" -e "s/<yourname>/$author_username/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${BLOCKLISTENER}" > "${ENDPATH}/$YBLOCKLISTENER"
-	sed -e "s/<namespace>/$author_username.$PLUGINNAMELC/g" -e "s/<yourname>/g" -e "s/<yourname>/$author_username/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${PLAYERLISTENER}" > "${ENDPATH}/$YPLAYERLISTENER"
-	sed -e "s/<namespace>/$author_username.$PLUGINNAMELC/g" -e "s/<yourname>/g" -e "s/<yourname>/$author_username/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${PLUGIN}" > "${ENDPATH}/${PLUGINNAME}.java"
+	sed -e "s/<namespace>/$author_username.$PLUGINNAMELC/g" -e "s/<yourname>/$author_username/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${BLOCKLISTENER}" > "${ENDPATH}/$YBLOCKLISTENER"
+	sed -e "s/<namespace>/$author_username.$PLUGINNAMELC/g" -e "s/<yourname>/$author_username/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${PLAYERLISTENER}" > "${ENDPATH}/$YPLAYERLISTENER"
+	sed -e "s/<namespace>/$author_username.$PLUGINNAMELC/g" -e "s/<yourname>/$author_username/g" -e "s/<pluginname>/$PLUGINNAME/g" "${SCRIPTROOT}/files/${PLUGIN}" > "${ENDPATH}/${PLUGINNAME}.java"
 fi
 
 # Project file generation.
